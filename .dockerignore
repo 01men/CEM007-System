@@ -1,0 +1,15 @@
+.venv/
+**/__pycache__/
+.pytest_cache/
+logs/
+tests/
+docs/
+scripts/
+deploy_staging/
+*.db-wal
+*.db-shm
+*.tar.gz
+.git/
+Dockerfile
+docker-compose.yml
+.dockerignore

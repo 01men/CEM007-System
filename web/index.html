@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>能耗与碳排管理系统</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="toast-wrap"></div>
+
+<div class="layout" id="layout" style="display:none">
+  <!-- 左侧深色侧边栏 -->
+  <aside class="sidebar">
+    <div class="logo">能耗与碳排管理<small>企业能碳一体化平台</small></div>
+    <nav class="menu" id="menu"></nav>
+  </aside>
+
+  <!-- 主区域 -->
+  <div class="main">
+    <header class="topbar">
+      <div class="page-title" id="page-title">工作台</div>
+      <div class="user-info">
+        <span id="user-mock" class="badge locked" style="display:none">Mock 环境</span>
+        <span id="user-name"></span>
+        <span id="user-role" class="badge"></span>
+        <span id="user-dept"></span>
+        <button class="btn btn-sm" id="btn-logout">退出</button>
+      </div>
+    </header>
+    <main class="content" id="content">
+      <div class="loading">加载中…</div>
+    </main>
+  </div>
+</div>
+
+<div class="loading" id="boot-loading">正在加载用户信息…</div>
+
+<script src="/vendor/echarts.min.js"></script>
+<script src="/vendor/qrcode.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

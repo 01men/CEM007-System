@@ -1,0 +1,14 @@
+# 便捷启动（可选）；scripts/deploy_docker.py 不依赖 compose，纯 docker 命令亦可部署
+services:
+  jujie:
+    build: .
+    image: jujie-energy:1.0
+    container_name: jujie
+    ports:
+      - "8080:8080"
+    volumes:
+      - jujie-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  jujie-data:

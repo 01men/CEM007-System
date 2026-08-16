@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模拟扫码 - 能耗与碳排管理系统</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page">
+<div class="auth-box" style="width:440px">
+  <h1 id="page-title">请使用钉钉扫码（模拟环境）</h1>
+  <div class="sub" id="page-sub">以下为系统账号，点击任意身份模拟"扫码确认"</div>
+
+  <div id="err-box" class="auth-error" style="display:none"></div>
+
+  <!-- 账号列表：由 /api/auth/mock-accounts 动态加载 -->
+  <div id="account-list"><div class="sub">加载中…</div></div>
+
+  <div style="text-align:center;margin-top:14px">
+    <a href="/login.html" id="back-link">返回登录页</a>
+  </div>
+</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var bindState = params.get('mode') === 'bind' ? (params.get('state') || '') : '';
+
+  var list = document.getElementById('account-list');
+  var errBox = document.getElementById('err-box');
+  if (bindState) {
+    document.getElementById('page-title').textContent = '扫码绑定身份（模拟环境）';
+    document.getElementById('page-sub').textContent = '点击该成员本人的钉钉身份，模拟其扫码确认绑定';
+    document.getElementById('back-link').style.display = 'none';
+  }
+
+  function showErr(msg) {
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }
+
+  fetch('/api/auth/mock-accounts').then(function (res) {
+    if (!res.ok) throw new Error('Mock 模式未开启或接口不可用');
+    return res.json();
+  }).then(function (accounts) {
+    list.innerHTML = '';
+    accounts.forEach(function (acc) {
+      var div = document.createElement('div');
+      div.className = 'mock-account';
+      div.innerHTML = '<div><div class="ma-name"></div><div class="ma-union"></div></div>' +
+        '<button class="btn btn-sm btn-primary">扫码确认</button>';
+      div.querySelector('.ma-name').textContent = acc.name +
+        (acc.role_code ? '（' + acc.role_code + '）' : '');
+      div.querySelector('.ma-union').textContent = acc.unionid;
+      div.addEventListener('click', function () { mockLogin(acc); });
+      list.appendChild(div);
+    });
+  }).catch(function (e) {
+    list.innerHTML = '';
+    showErr(e.message);
+  });
+
+  // 模拟扫码确认：后端返回 302 重定向（fetch 自动跟随），按最终落点跳转
+  function mockLogin(acc) {
+    errBox.style.display = 'none';
+    var payload = { unionid: acc.unionid, name: acc.name, mobile: acc.mobile || '' };
+    if (bindState) payload.state = bindState;
+    fetch('/api/auth/mock-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    }).then(function (res) {
+      // 重定向链终点：/（已开通）、/pending.html（未开通）、/login.html?err=（失败）、/bind-result.html（绑定）
+      var url = res.url || '';
+      if (url.indexOf('bind-result.html') >= 0) {
+        location.href = url;
+      } else if (url.indexOf('pending.html') >= 0) {
+        location.href = '/pending.html';
+      } else if (url.indexOf('login.html') >= 0) {
+        location.href = url;
+      } else if (res.ok || res.redirected) {
+        location.href = '/index.html';
+      } else {
+        return res.json().then(function (d) { throw new Error(d.detail || '操作失败'); });
+      }
+    }).catch(function (e) {
+      showErr(e.message);
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - 能耗与碳排管理系统</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body class="auth-page">
+<div class="auth-box">
+  <h1>能耗与碳排管理系统</h1>
+  <div class="sub">企业内网 · 能碳一体化管理平台</div>
+
+  <!-- 错误提示（如账号停用） -->
+  <div id="err-box" class="auth-error" style="display:none"></div>
+
+  <!-- 钉钉扫码登录入口 -->
+  <button id="btn-ding" class="btn btn-primary btn-block">钉钉扫码登录</button>
+
+  <div class="auth-divider">管理员本地登录</div>
+
+  <!-- 管理员本地登录表单 -->
+  <form id="local-form">
+    <div class="form-item">
+      <label>用户名</label>
+      <input type="text" id="name" autocomplete="username" required>
+    </div>
+    <div class="form-item">
+      <label>密码</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn btn-blue btn-block" id="btn-local">登 录</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  var errBox = document.getElementById('err-box');
+
+  function showErr(msg) {
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }
+
+  // URL 参数 err：账号停用 / 钉钉登录失败原因（后端回调回跳携带）
+  var params = new URLSearchParams(location.search);
+  var err = params.get('err');
+  if (err === 'disabled') {
+    showErr('账号已停用，请联系管理员');
+  } else if (err) {
+    showErr(err);
+  }
+
+  // 钉钉扫码登录：获取扫码地址后跳转（Mock 环境跳模拟扫码页）
+  document.getElementById('btn-ding').addEventListener('click', function () {
+    errBox.style.display = 'none';
+    fetch('/api/auth/dingtalk/qr-url')
+      .then(function (res) {
+        if (!res.ok) {
+          return res.json().then(function (d) { throw new Error(d.detail || '获取扫码地址失败'); });
+        }
+        return res.json();
+      })
+      .then(function (d) {
+        location.href = d.url;
+      })
+      .catch(function (e) { showErr(e.message); });
+  });
+
+  // 管理员本地登录
+  document.getElementById('local-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    errBox.style.display = 'none';
+    var btn = document.getElementById('btn-local');
+    btn.disabled = true;
+    fetch('/api/auth/local-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('name').value.trim(),
+        password: document.getElementById('password').value
+      })
+    }).then(function (res) {
+      if (res.ok) {
+        location.href = '/index.html';
+        return;
+      }
+      return res.json().then(function (d) { throw new Error(d.detail || '登录失败'); });
+    }).catch(function (e) {
+      showErr(e.message);
+    }).finally(function () {
+      btn.disabled = false;
+    });
+  });
+})();
+</script>
+</body>
+</html>
