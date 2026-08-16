@@ -1687,9 +1687,14 @@ PAGES.sys = async function (el) {
         var m = openModal('钉钉扫码绑定 - ' + u.name,
           '<div style="text-align:center">' +
           '<div id="bind-qr" style="display:inline-block;padding:8px;background:#fff"></div>' +
-          '<div class="sub" style="margin-top:8px">请成员使用<b>钉钉 App</b> 扫码完成身份绑定（链接 10 分钟内有效，一次性使用）</div>' +
+          '<div class="sub" style="margin-top:8px">方式一：成员用<b>钉钉 App</b> 扫码确认（手机须连接公司内网 Wi-Fi）</div>' +
+          '<div class="sub" style="margin-top:4px">方式二：成员在已登录钉钉客户端的 <b>PC</b> 上打开链接，点击授权一键完成</div>' +
           '<div style="margin-top:8px;word-break:break-all;font-size:12px;color:#888" id="bind-url"></div>' +
-          '<button class="btn btn-sm" id="bind-copy" style="margin-top:6px">复制链接</button>' +
+          '<div style="margin-top:8px">' +
+          '<button class="btn btn-sm" id="bind-copy">复制链接</button> ' +
+          '<button class="btn btn-sm btn-primary" id="bind-open">本机打开授权</button>' +
+          '</div>' +
+          '<div class="sub" style="margin-top:6px;color:#c00">链接 10 分钟内有效、一次性使用；绑定结果页可关闭后回到本页刷新</div>' +
           '</div>');
         $('#bind-url', m.el).textContent = url;
         if (window.QRCode) {
@@ -1697,6 +1702,9 @@ PAGES.sys = async function (el) {
         }
         $('#bind-copy', m.el).addEventListener('click', function () {
           navigator.clipboard.writeText(url).then(function () { toast('链接已复制', 'success'); });
+        });
+        $('#bind-open', m.el).addEventListener('click', function () {
+          window.open(url, '_blank');  // 钉钉页面识别 PC 客户端登录态，可点击授权
         });
       } catch (e) { toast(e.message, 'error'); }
     }

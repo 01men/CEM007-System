@@ -206,15 +206,22 @@ def dingtalk_callback(request: Request, authCode: str = "", code: str = "",
     if not st:
         return _login_fail("登录状态已过期，请重新扫码")
     auth_code = authCode or code  # 钉钉回跳参数名两种都兼容
+    bind_uid = st.get("bind_user_id")
     if not auth_code:
-        return _login_fail("钉钉未返回授权码（可能已取消授权）")
+        msg = "钉钉未返回授权码（可能已取消授权）"
+        if bind_uid:
+            return RedirectResponse("/bind-result.html?err=" + urllib.parse.quote(msg), 302)
+        return _login_fail(msg)
     try:
         identity = _exchange_auth_code(auth_code)
     except Exception as exc:
+        if bind_uid:
+            audit.log_login("", "", "bind", f"dingtalk-error:{exc}", request)
+            return RedirectResponse("/bind-result.html?err=" + urllib.parse.quote(str(exc)), 302)
         audit.log_login("", "", "login", f"dingtalk-error:{exc}", request)
         return _login_fail(str(exc))
-    if st.get("bind_user_id"):
-        return _bind_as(identity, st["bind_user_id"], request)
+    if bind_uid:
+        return _bind_as(identity, bind_uid, request)
     return _login_as(identity, request, None)
 
 
