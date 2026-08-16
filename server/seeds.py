@@ -83,6 +83,14 @@ SOURCES = [
 ]
 
 
+# ── 钉钉扫码应用默认配置（企业预置；secret 以 Fernet 加密落库，勿外泄）──
+DING_DEFAULTS = {
+    "corp_id": "0deb154e-b298-4cad-b9a5-6fcf684b9805",
+    "qr_app_id": "dingeosnkhc3zj75g3vg",
+    "qr_app_secret": "GWVZ9Fap-qvygB8xHIEbn_5WRbmfxclpH3a-6j0y5re7s_w6OsFZPAyCIew0buiA",
+}
+
+
 def seed_all(admin_password_hash: str) -> None:
     """幂等初始化：任何一步已存在数据则跳过对应步骤。"""
     now = db.now_iso()
@@ -164,3 +172,12 @@ def seed_all(admin_password_hash: str) -> None:
             db.execute(
                 "INSERT INTO customer_revenue(year,customer_code,revenue,created_at,created_by)"
                 " VALUES(?,?,?,?,?)", (inventory_year, cust["code"], cust["revenue"], now, "seed"))
+
+    # ── 钉钉扫码应用默认配置（仅在未配置时写入；密钥 Fernet 加密）──
+    if not db.query_one("SELECT 1 FROM ding_config LIMIT 1"):
+        from . import auth
+        db.execute(
+            "INSERT INTO ding_config(id,corp_id,qr_app_id,qr_app_secret_enc,updated_at)"
+            " VALUES(1,?,?,?,?)",
+            (DING_DEFAULTS["corp_id"], DING_DEFAULTS["qr_app_id"],
+             auth.encrypt_secret(DING_DEFAULTS["qr_app_secret"]), now))

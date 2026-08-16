@@ -180,8 +180,10 @@ def _real_ding_mode(monkeypatch, with_config=True):
     """切到非 Mock 模式；with_config 时写入测试用钉钉配置。"""
     import server.config
     monkeypatch.setattr(server.config, "DINGTALK_MOCK", False)
+    from server import db
+    db.execute("DELETE FROM ding_config")  # 种子已预置默认配置，先清空
     if with_config:
-        from server import auth as srv_auth, db
+        from server import auth as srv_auth
         db.execute(
             "INSERT INTO ding_config(id,qr_app_id,qr_app_secret_enc) VALUES(1,?,?) "
             "ON CONFLICT(id) DO UPDATE SET qr_app_id=excluded.qr_app_id,"
